@@ -14,7 +14,21 @@ public class CandidateDAO {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
-            em.persist(candidate);
+            
+            // Vérifier si le candidat existe déjà pour cet utilisateur
+            try {
+                Candidate existing = em.createQuery("SELECT c FROM Candidate c WHERE c.user.id = :uid", Candidate.class)
+                                       .setParameter("uid", candidate.getUser().getId())
+                                       .getSingleResult();
+                
+                // Si trouvé, on met à jour l'ID pour que 'merge' fonctionne
+                candidate.setId(existing.getId());
+                em.merge(candidate); // Mise à jour
+            } catch (Exception e) {
+                // Si pas trouvé, on crée
+                em.persist(candidate); // Création
+            }
+            
             em.getTransaction().commit();
         } catch (Exception e) {
             if (em.getTransaction().isActive()) {

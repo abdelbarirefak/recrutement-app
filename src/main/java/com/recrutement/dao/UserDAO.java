@@ -5,43 +5,67 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 import java.util.List;
-import org.hibernate.query.Query;
 
 public class UserDAO {
 
-    // We create one factory for the whole app (in a real app, this would be a Singleton)
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("recrutementPU");
     
     public List<User> findAll() {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.createQuery("FROM User", User.class).list();
+        EntityManager em = emf.createEntityManager();
+        try {
+            return em.createQuery("SELECT u FROM User u", User.class).getResultList();
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        } finally {
+            em.close();
         }
     }
     
-    public User findById(int id) {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.get(User.class, id);
+    public User findById(long id) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            return em.find(User.class, id);
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
+        } finally {
+            em.close();
         }
     }
     
     public void update(User user) {
-        Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            session.merge(user);
-            transaction.commit();
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            em.merge(user);
+            em.getTransaction().commit();
         } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();
             e.printStackTrace();
+        } finally {
+            em.close();
         }
     }
     
+    // NOUVELLE MÉTHODE : SUPPRIMER
+    public void delete(long id) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            User user = em.find(User.class, id);
+            if (user != null) {
+                em.remove(user);
+            }
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+    }
+    
+    // Méthodes save et findByEmail inchangées...
     public void save(User user) {
         EntityManager em = emf.createEntityManager();
         try {
@@ -49,9 +73,7 @@ public class UserDAO {
             em.persist(user);
             em.getTransaction().commit();
         } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();
             e.printStackTrace();
         } finally {
             em.close();
@@ -61,14 +83,8 @@ public class UserDAO {
     public User findByEmail(String email) {
         EntityManager em = emf.createEntityManager();
         try {
-            // Using JPQL (Java Persistence Query Language) to find a user by email
             return em.createQuery("SELECT u FROM User u WHERE u.email = :email", User.class)
-                     .setParameter("email", email)
-                     .getSingleResult();
-        } catch (Exception e) {
-            return null; // Return null if user not found
-        } finally {
-            em.close();
-        }
+                     .setParameter("email", email).getSingleResult();
+        } catch (Exception e) { return null; } finally { em.close(); }
     }
 }

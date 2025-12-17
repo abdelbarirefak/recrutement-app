@@ -4,22 +4,15 @@ import com.recrutement.entity.Application;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
+import java.util.List;
 
 public class ApplicationDAO {
-
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("recrutementPU");
 
-    public void save(Application application) {
+    public List<Application> findAll() {
         EntityManager em = emf.createEntityManager();
         try {
-            em.getTransaction().begin();
-            em.persist(application);
-            em.getTransaction().commit();
-        } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
-            e.printStackTrace();
+            return em.createQuery("SELECT a FROM Application a", Application.class).getResultList();
         } finally {
             em.close();
         }

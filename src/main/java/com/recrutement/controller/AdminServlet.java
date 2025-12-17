@@ -1,6 +1,10 @@
 package com.recrutement.controller;
 
+import com.recrutement.dao.ApplicationDAO;
+import com.recrutement.dao.JobOfferDAO;
 import com.recrutement.dao.UserDAO;
+import com.recrutement.entity.Application;
+import com.recrutement.entity.JobOffer;
 import com.recrutement.entity.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -15,10 +19,11 @@ import java.util.List;
 public class AdminServlet extends HttpServlet {
     
     private UserDAO userDAO = new UserDAO();
+    private JobOfferDAO jobOfferDAO = new JobOfferDAO();
+    private ApplicationDAO applicationDAO = new ApplicationDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // 1. Vérification de sécurité : Est-ce un ADMIN ?
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("loggedUser");
 
@@ -27,34 +32,45 @@ public class AdminServlet extends HttpServlet {
             return;
         }
 
-        // 2. Récupérer la liste des utilisateurs
-        List<User> users = userDAO.findAll(); 
+        // 1. Charger TOUTES les données pour le dashboard
+        List<User> users = userDAO.findAll();
+        List<JobOffer> offers = jobOfferDAO.findAll();
+        List<Application> applications = applicationDAO.findAll();
         
-        // 3. Envoyer à la page JSP
+        // 2. Envoyer à la JSP
         request.setAttribute("userList", users);
+        request.setAttribute("offerList", offers);
+        request.setAttribute("appList", applications);
+        
         request.getRequestDispatcher("admin-dashboard.jsp").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Action de validation (clic sur le bouton "Valider")
         String action = request.getParameter("action");
         
-        if ("validate".equals(action)) {
-            try {
-                int userId = Integer.parseInt(request.getParameter("userId"));
-                User userToValidate = userDAO.findById(userId);
-                
-                if (userToValidate != null) {
-                    userToValidate.setValidated(true);
-                    userDAO.update(userToValidate);
+        try {
+            if ("validate_user".equals(action)) {
+                long userId = Long.parseLong(request.getParameter("id"));
+                User u = userDAO.findById(userId);
+                if (u != null) {
+                    u.setValidated(true);
+                    userDAO.update(u);
                 }
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
+            } 
+            else if ("delete_user".equals(action)) {
+                long userId = Long.parseLong(request.getParameter("id"));
+                userDAO.delete(userId);
             }
+            else if ("delete_offer".equals(action)) {
+                long offerId = Long.parseLong(request.getParameter("id"));
+                jobOfferDAO.delete(offerId);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         
-        // Recharger la page
+        // Recharger la page pour voir les changements
         response.sendRedirect("admin");
     }
 }

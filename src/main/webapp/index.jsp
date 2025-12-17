@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="com.recrutement.dao.JobOfferDAO, com.recrutement.entity.JobOffer, java.util.List" %>
+
 <html lang="fr" class="scroll-smooth">
 <head>
     <meta charset="utf-8"/>
@@ -25,12 +27,12 @@
 
     <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2">
+            <a href="index.jsp" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <div class="bg-indigo-600 p-1.5 rounded-lg text-white">
                     <i data-lucide="briefcase" class="w-5 h-5"></i>
                 </div>
                 <span class="text-xl font-bold tracking-tight text-slate-900">JobBoard</span>
-            </div>
+            </a>
 
             <nav class="hidden md:flex gap-8 text-sm font-medium text-slate-600">
                 <a href="#" class="hover:text-indigo-600 transition-colors">Offres</a>
@@ -48,7 +50,7 @@
     </header>
 
     <main class="flex-grow">
-        <section class="relative pt-20 pb-32 px-4 overflow-hidden">
+        <section class="relative pt-20 pb-16 px-4 overflow-hidden">
             <div class="max-w-4xl mx-auto text-center relative z-10">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold mb-6 border border-indigo-100">
                     <span class="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
@@ -81,12 +83,65 @@
             </div>
         </section>
 
-        <section class="py-20 bg-white border-t border-slate-100">
+        <section class="py-16 bg-white border-t border-slate-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-2xl font-bold mb-8 text-slate-900">Dernières opportunités</h2>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <% 
+                    // Récupération des offres via le DAO
+                    try {
+                        JobOfferDAO jobDao = new JobOfferDAO();
+                        List<JobOffer> offers = jobDao.findAll();
+                        
+                        if(offers != null && !offers.isEmpty()) {
+                            int count = 0;
+                            for(JobOffer offer : offers) {
+                                if(count++ >= 6) break; // Limite à 6 offres
+                    %>
+                    <div class="border border-slate-200 p-6 rounded-xl hover:shadow-lg transition bg-slate-50 group">
+                        <h3 class="font-bold text-lg text-slate-900 group-hover:text-indigo-600 transition-colors"><%= offer.getTitle() %></h3>
+                        <p class="text-slate-500 text-sm mb-4 flex items-center gap-1">
+                            <i data-lucide="map-pin" class="w-3 h-3"></i> <%= offer.getLocation() %>
+                        </p>
+                        
+                        <div class="flex justify-between items-center mt-4 pt-4 border-t border-slate-200">
+                            <span class="text-xs bg-white border border-slate-200 px-2 py-1 rounded text-slate-600 font-medium">Offre Vérifiée</span>
+                            <a href="login.jsp" class="text-indigo-600 text-sm font-medium hover:underline flex items-center gap-1">
+                                Voir détail <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <% 
+                            }
+                        } else {
+                    %>
+                        <div class="col-span-3 text-center py-8 text-slate-500 italic">
+                            Aucune offre disponible pour le moment.
+                        </div>
+                    <% 
+                        }
+                    } catch (Exception e) {
+                    %>
+                        <div class="col-span-3 text-center py-8 text-red-500 bg-red-50 rounded-lg">
+                            Impossible de charger les offres (Erreur connexion BDD).
+                        </div>
+                    <% } %>
+                </div>
+                
+                <div class="text-center mt-12">
+                    <a href="register.jsp" class="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-300 rounded-full text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all">
+                        Voir toutes les offres <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-20 bg-slate-50 border-t border-slate-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid md:grid-cols-2 gap-8">
-                    <div class="group relative overflow-hidden rounded-2xl bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-100 transition-all p-8 md:p-12">
+                    <div class="group relative overflow-hidden rounded-2xl bg-white hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-100 transition-all p-8 md:p-12 shadow-sm">
                         <div class="relative z-10">
-                            <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-indigo-600 mb-6">
+                            <div class="w-12 h-12 bg-slate-50 rounded-xl shadow-sm flex items-center justify-center text-indigo-600 mb-6">
                                 <i data-lucide="user" class="w-6 h-6"></i>
                             </div>
                             <h3 class="text-2xl font-bold text-slate-900 mb-3">Candidat</h3>

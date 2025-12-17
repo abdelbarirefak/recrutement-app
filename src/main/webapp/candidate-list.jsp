@@ -25,35 +25,48 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <% 
+                // C'est cette ligne qui manquait et causait l'erreur 500 :
                 List<Candidate> candidates = (List<Candidate>) request.getAttribute("candidateList");
+                
                 if (candidates != null && !candidates.isEmpty()) {
                     for (Candidate c : candidates) {
+                        // Vérification de la validation (éviter les NullPointerException si User est null)
+                        boolean isValid = (c.getUser() != null && c.getUser().isValidated());
             %>
-            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+            <div class="bg-white p-6 rounded-xl border <%= isValid ? "border-slate-200" : "border-orange-200 bg-orange-50" %> shadow-sm transition-all">
                 <div class="flex items-start gap-4 mb-4">
                     <div class="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg">
-                        <%= c.getFirstName() != null ? c.getFirstName().substring(0,1) : "?" %>
+                        <%= (c.getFirstName() != null && isValid) ? c.getFirstName().substring(0,1) : "?" %>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-slate-900"><%= c.getFirstName() %> <%= c.getLastName() %></h3>
-                        <p class="text-sm text-indigo-600 font-medium"><%= c.getTitle() != null ? c.getTitle() : "Candidat" %></p>
+                        <% if (isValid) { %>
+                            <h3 class="text-lg font-bold text-slate-900"><%= c.getFirstName() %> <%= c.getLastName() %></h3>
+                            <p class="text-sm text-indigo-600 font-medium"><%= c.getTitle() != null ? c.getTitle() : "Candidat" %></p>
+                        <% } else { %>
+                            <h3 class="text-lg font-bold text-slate-600">Candidat en attente</h3>
+                            <p class="text-xs text-orange-600 font-bold uppercase">Validation Admin Requise</p>
+                        <% } %>
                     </div>
                 </div>
                 
-                <div class="space-y-2 text-sm text-slate-600 mb-6">
-                    <p class="flex items-center gap-2">
-                        <span>📧</span> <%= c.getUser().getEmail() %>
-                    </p>
-                    <% if(c.getPhone() != null) { %>
-                    <p class="flex items-center gap-2">
-                        <span>📞</span> <%= c.getPhone() %>
-                    </p>
-                    <% } %>
-                </div>
-
-                <button class="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
-                    Contacter
-                </button>
+                <% if (isValid) { %>
+                    <div class="space-y-2 text-sm text-slate-600 mb-6">
+                        <p class="flex items-center gap-2"><span>📧</span> <%= c.getUser().getEmail() %></p>
+                        <% if(c.getPhone() != null) { %>
+                            <p class="flex items-center gap-2"><span>📞</span> <%= c.getPhone() %></p>
+                        <% } %>
+                    </div>
+                    <button class="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                        Contacter
+                    </button>
+                <% } else { %>
+                    <div class="text-sm text-slate-500 mb-6 italic">
+                        Les informations de contact sont masquées tant que le profil n'est pas validé par un administrateur.
+                    </div>
+                    <button disabled class="w-full py-2 bg-gray-300 text-gray-500 rounded-lg text-sm cursor-not-allowed">
+                        Info masquée
+                    </button>
+                <% } %>
             </div>
             <% 
                     }
